@@ -1,1 +1,1 @@
-nodemon ./bin/www
+nodemon ./bin/www --watch . ./views -e twig,js

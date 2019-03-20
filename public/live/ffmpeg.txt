@@ -1,0 +1,17 @@
+ffmpeg -re
+ -i "URL"
+ -vn
+ -c:a libmp3lame
+ -ac 2
+ -strict -2
+ -crf 18
+ -profile:v baseline
+ -maxrate 400k
+ -bufsize 1835k
+ -pix_fmt yuv420p
+ -hls_time 1
+ -hls_list_size 10
+ -hls_wrap 10
+ -start_number 1
+ -hls_flags program_date_time 
+ -speed 1 go.m3u8
