@@ -11,4 +11,9 @@ router.get('/play', function(req, res, next) {
   res.render('play', {  });
 });
 
+/* GET home page. */
+router.get('/play2', function(req, res, next) {
+  res.render('play2', {  });
+});
+
 module.exports = router;

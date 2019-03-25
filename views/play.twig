@@ -1,49 +1,62 @@
 {% extends 'layout.twig' %}
 
 {% block body %}
-    <div id="result"></div>
-    <script src="/javascripts/jquery-3.3.1.min.js"></script>
-    <script src="/javascripts/m3u8-parser.min.js"></script>
-    <script>
-        var parser = new m3u8Parser.Parser();
+<div id="result"></div>
+<script src="/javascripts/jquery-3.3.1.min.js"></script>
+<script src="/javascripts/m3u8-parser.min.js"></script>
+<script>
+    var parser = new m3u8Parser.Parser();
 
-        function isFunction(functionToCheck) {
-            return functionToCheck && {}.toString.call(functionToCheck) === '[object Function]';
-        }
+    function isFunction(functionToCheck) {
+        return functionToCheck && {}.toString.call(functionToCheck) === '[object Function]';
+    }
 
-        function getList(callback) {
-            $.get( "/live/go.m3u8", function( data ) {
-                parser.push(data);
-                parser.end();
-                var segments = parser.manifest.segments;
-                //console.log(segments);
-                if(isFunction(callback))
-                    callback(segments);
-            });
-        }
+    function getList(callback) {
+        $.get("/live/go.m3u8", function (data) {
+            parser.push(data);
+            parser.end();
+            var segments = parser.manifest.segments;
+            //console.log(segments);
+            if (isFunction(callback))
+                callback(segments);
+        });
+    }
 
-        var currentTime = Date.parse("2019-3-20 23:11:02");
-        var buffer = {};
-        getList(function(segments) {
-            var k = 0;
-            for(var i = 1; i < segments.length; i++) {
-                var last = segments[i-1];
+    //var currentTime = Date.parse("2019-03-18 22:18:28");
+    var currentTime = (new Date()).getTime();
+    var buffer = {};
+
+    appendBuffer();
+
+    function appendBuffer() {
+        getList(function (segments) {
+            var k = -1;
+            for (var i = 1; i < segments.length; i++) {
+                var last = segments[i - 1];
                 var segment = segments[i];
                 var segTime = segment.dateTimeObject;
 
-                if(segTime.getTime() > currentTime && last.dateTimeObject.getTime() < currentTime) {
-                    k = i+2;
+                if (segTime.getTime() > currentTime && last.dateTimeObject.getTime() < currentTime) {
+                    k = i + 2;
                     break;
                 }
             }
 
-            console.log(k);
-            for(var i = k; i < segments.length; i++) {
-                var segment = segments[i];
-                buffer[segment.dateTimeObject] = segment.uri;
+            if (k == -1 || k >= segments.length || segments.length - k <= segments.length / 3) {
+                console.log("Not found");
+                setTimeout(appendBuffer, 1000);
+            } else {
+                console.log(k);
+                for (var i = k; i < segments.length; i++) {
+                    var segment = segments[i];
+                    buffer[segment.dateTimeObject] = segment.uri;
+                }
+                console.log("GO");
+                console.log(buffer);
             }
-            console.log("GO");
-            console.log(buffer);
         });
-    </script>
+
+        
+    }
+</script>
 {% endblock %}

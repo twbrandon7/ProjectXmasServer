@@ -1,0 +1,108 @@
+{% extends 'layout.twig' %}
+
+{% block head %}
+{# <link href="https://vjs.zencdn.net/7.4.1/video-js.css" rel="stylesheet">
+
+<!-- If you'd like to support IE8 (for Video.js versions prior to v7) -->
+<script src="https://vjs.zencdn.net/ie8/ie8-version/videojs-ie8.min.js"></script> #}
+{% endblock %}
+
+{% block body %}
+
+<div id="audio"></div>
+
+<script src="/javascripts/jquery-3.3.1.min.js"></script>
+<script src="/javascripts/mux.js"></script>
+
+<script>
+  var div = document.getElementById("audio");
+  var audio = document.createElement('audio');
+  audio.controls = true;
+  audio.autoplay = true;
+  div.appendChild(audio);
+  // create an object, an instance of the MediaSource
+  var mediaSource = new MediaSource();
+
+  var transmuxer = new muxjs.mp4.Transmuxer();
+  var sourceBuffer = null;
+
+  // to this `mediaSource` object add an event listener for the `sourceopen` event
+  // and run the code inside the function when `sourceopen` happens
+  mediaSource.addEventListener('sourceopen', function () {
+    console.log('1');
+    sourceBuffer = mediaSource.addSourceBuffer('video/mp4; codecs="avc1.64001f,mp4a.40.5"');
+    /*fetch('/live/go0.ts', {
+      // set header
+    }).then(function (response) {
+      return response.arrayBuffer();
+    }).then(function (arrayBuffer) {
+      // data events signal a new fMP4 segment is ready:
+      console.log("GO");
+      transmuxer.push(new Uint8Array(arrayBuffer));
+      transmuxer.flush();
+    });*/
+    /*$.get("/live/go1.mp3", {responseType:'arraybuffer'}).done(function (data) {
+      sourceBuffer.appendBuffer(data);
+    });*/
+    fetchAB("/live/go1.mp3", function(data){
+      sourceBuffer.appendBuffer(data);
+      sourceBuffer.addEventListener('updateend', function (_) {
+        console.log("GO");
+        mediaSource.duration = 1;
+        //mediaSource.endOfStream();
+        //video.play();
+        //console.log(mediaSource.readyState); // ended
+      });
+    });
+  });
+
+  var remuxedSegments = [];
+  var remuxedBytesLength = 0;
+  var remuxedInitSegment = null;
+  var bytes = null;
+  var createInitSegment = true;
+
+  transmuxer.on('data', function (event) {
+    remuxedSegments.push(event);
+    remuxedBytesLength += event.data.byteLength;
+    remuxedInitSegment = event.initSegment;
+  });
+
+  transmuxer.on('done', function () {
+    var offset = 0;
+    if (createInitSegment) {
+      bytes = new Uint8Array(remuxedInitSegment.byteLength + remuxedBytesLength)
+      bytes.set(remuxedInitSegment, offset);
+      offset += remuxedInitSegment.byteLength;
+      createInitSegment = false;
+    } else {
+      bytes = new Uint8Array(remuxedBytesLength);
+    }
+
+    for (j = 0, i = offset; j < remuxedSegments.length; j++) {
+      bytes.set(remuxedSegments[j].data, i);
+      i += remuxedSegments[j].byteLength;
+    }
+  });
+
+  function fetchAB (url, cb) {
+    console.log(url);
+    var xhr = new XMLHttpRequest;
+    xhr.open('get', url);
+    xhr.responseType = 'arraybuffer';
+    xhr.onload = function () {
+      cb(xhr.response);
+    };
+    xhr.send();
+  };
+
+
+  // hey, `video` element, here is the source of the media I'd like you to play
+  // it's not a simple url, is something more complex
+  // , a `MediaSource` kind of thing
+  // and it might take you some time to be ready        
+  audio.src = URL.createObjectURL(mediaSource);
+
+</script>
+
+{% endblock %}

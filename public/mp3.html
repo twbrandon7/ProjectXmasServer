@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+</head>
+
+<body>
+    <div id="audio"></div>
+
+    <script src="/javascripts/jquery-3.3.1.min.js"></script>
+    <script src="/javascripts/mux.js"></script>
+    <script>
+        var transmuxer = new muxjs.mp4.Transmuxer();
+        var audio = document.createElement('audio');
+        audio.controls = true;
+        audio.autoplay = true;
+        document.getElementById("audio").appendChild(audio);
+
+        try {
+            if (!'MediaSource' in window)
+                throw new ReferenceError('There is no MediaSource property in window object.');
+
+            var mime = 'audio/mpeg';
+
+            if (!MediaSource.isTypeSupported(mime)) {
+                alert('Can not play the media. Media of MIME type ' + mime + ' is not supported.');
+                throw ('Media of type ' + mime + ' is not supported.');
+            }
+
+            var mediaSource = new MediaSource();
+            var sourceBuffer = null;
+
+            audio.src = URL.createObjectURL(mediaSource);
+
+            mediaSource.addEventListener('sourceopen', function () {
+                sourceBuffer = this.addSourceBuffer(mime);
+                // sourceBuffer.appendWindowEnd = 4.0;
+
+                fetchAB('/live/go0.mp3', function(response){
+                    // console.log(response);
+                    transmuxer.push(new Uint8Array(response));
+                    transmuxer.flush();
+                });
+
+            });
+
+            var remuxedSegments = [],
+                remuxedBytesLength = 0,
+                remuxedInitSegment = null,
+                bytes = null,
+                offset = 0,
+                queue = [],
+                createInitSegment = true,
+                lock = false;
+
+            transmuxer.on('data', function (event) {
+                // remuxedSegments.push(event);
+                // remuxedBytesLength += event.data.byteLength;
+                // remuxedInitSegment = event.initSegment;
+                queue.push(event.data.buffer);
+                console.log(event);
+            });
+
+            // transmuxer.on('done', function () {
+            //     var offset = 0;
+            //     if (createInitSegment) {
+            //         bytes = new Uint8Array(remuxedInitSegment.byteLength + remuxedBytesLength)
+            //         bytes.set(remuxedInitSegment, offset);
+            //         offset += remuxedInitSegment.byteLength;
+            //         createInitSegment = false;
+            //     } else {
+            //         bytes = new Uint8Array(remuxedBytesLength);
+            //     }
+            //     for (j = 0, i = offset; j < remuxedSegments.length; j++) {
+            //         bytes.set(remuxedSegments[j].data, i);
+            //         i += remuxedSegments[j].byteLength;
+            //     }
+            //     queue.push(bytes);
+            // });
+
+            setInterval(function () {
+                if (queue.length > 0 && sourceBuffer != null && !lock) {
+                    lock = true;
+                    // console.log(bytes);
+                    sourceBuffer.appendBuffer(queue.shift());
+                    sourceBuffer.addEventListener('updateend', function (_) {
+                        lock = false;
+                    });
+                }
+            }, 1);
+
+            function fetchAB(url, cb) {
+                var xhr = new XMLHttpRequest;
+                xhr.open('GET', url);
+                // xhr.open('GET', 'sample.mp3'); /* while testing in localhost */
+                xhr.responseType = 'arraybuffer';
+                xhr.onload = function () {
+                    try {
+                        switch (this.status) {
+                            case 200:
+                                cb(this.response);
+                                break;
+                            case 404:
+                                throw 'File Not Found';
+                            default:
+                                throw 'Failed to fetch the file';
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    }
+                };
+                xhr.send();
+            }
+
+        } catch (e) {
+            console.error(e);
+        }
+    </script>
+</body>
+
+</html>
