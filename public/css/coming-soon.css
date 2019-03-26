@@ -60,8 +60,14 @@ video {
   z-index: 1;
 }
 
-.masthead {
+/* body {
   position: relative;
+} */
+
+.masthead {
+  /* position: relative; */
+  position: absolute;
+  right: 0;
   overflow: hidden;
   padding-bottom: 3rem;
   z-index: 2;
@@ -118,14 +124,14 @@ video {
   }
   .masthead .masthead-bg {
     min-height: 0;
-    -webkit-transform: skewX(-8deg);
-    transform: skewX(-8deg);
+    -webkit-transform: skewX(6deg);
+    transform: skewX(6deg);
     -webkit-transform-origin: top right;
     transform-origin: top right;
   }
   .masthead .masthead-content {
     padding-left: 3rem;
-    padding-right: 10rem;
+    padding-left: 6rem;
   }
   .masthead .masthead-content h1 {
     font-size: 3.5rem;
@@ -137,6 +143,7 @@ video {
 
 .social-icons {
   position: absolute;
+  left: 2rem;
   margin-bottom: 2rem;
   width: 100%;
   z-index: 2;

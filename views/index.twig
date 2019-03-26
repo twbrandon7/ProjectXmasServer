@@ -1,6 +1,101 @@
-{% extends 'layout.twig' %}
+{% extends 'layouts/tree-master.twig' %}
 
-{% block body %}
-  <h1>{{title}}</h1>
-  <p>Welcome to {{title}}</p>
+{% block title %} IoTtalk智慧聖誕樹 {% endblock %}
+
+{% block head %}
+  <link href="/css/loaders.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+  <div style="text-align:center;">
+    {# <h1>IoTtalk智慧聖誕樹</h1> #}
+    <h1>VoIP Lab DEMO</h1>
+    {# <img src="/img/voiplab.png" style="width:100px;"> #}
+    <button type="button" class="btn btn-primary btn-lg ball-pulse" id="btn_start" disabled="disabled" style="width:120px; height:48px;">
+      <span class="ball-pulse" style="transform: scale(0.7, 0.7);" id="btn_msg_loading">
+        <div></div>
+        <div></div>
+        <div></div>
+      </span>
+      <span id="btn_msg_start" style="display: none;">開始</span>
+      <span id="btn_msg_playing" style="display: none;">播放中...</span>
+      <span id="btn_msg_connection_error" style="display: none;">連線異常</span>
+    </button>
+  </div>
+{% endblock %}
+
+{% block script %}
+  <!-- IoT Talk -->
+  <script src="js/csmapi.js"></script>
+  <script src="js/demo_frame.js"></script>
+
+  <script>
+    $(document).ready(function(){
+      var daiSDK = dai();
+
+      function showElement(jqEle, bool) {
+        if(bool) {
+          jqEle.show();
+        } else {
+          jqEle.hide();
+        }
+      }
+
+      function switchBtn(status) {
+        //bit => [loading, ready, playing, connection_error]
+        var bit = [0, 0, 0, 0];
+        if(status == "loading") {
+          $("#btn_start").prop('disabled', true);
+          bit = [1, 0, 0, 0];
+        } else if(status == "ready") {
+          $("#btn_start").prop('disabled', false);
+          bit = [0, 1, 0, 0];
+        } else if(status == "playing") {
+          $("#btn_start").prop('disabled', true);
+          bit = [0, 0, 1, 0];
+        } else if(status == "connection_error") {
+          $("#btn_start").prop('disabled', true);
+          bit = [0, 0, 0, 1];
+        }
+        showElement($("#btn_msg_loading"), bit[0]);
+        showElement($("#btn_msg_start"), bit[1]);
+        showElement($("#btn_msg_playing"), bit[2]);
+        showElement($("#btn_msg_connection_error"), bit[3]);
+      }
+
+      $(window).on('iotTalkUpdate', function (e) {
+
+        var arr = e.dataArr[0];
+        if (e.df_name == undefined) return;
+        var df_name = e.df_name;
+        if(arr.length > 0) {
+          var json = arr[1];
+          json = JSON.parse(json);
+          if(json.time + 5000 >= (new Date()).getTime()) {
+            if(json.status == "ready") {
+              switchBtn("ready");
+            } else if(json.status == "playing") {
+              switchBtn("playing");
+            }
+          } else {
+            switchBtn("connection_error");
+          }          
+        }
+      });
+      
+      function getStatusString(action) {
+        return JSON.stringify({
+            time: (new Date()).getTime(),
+            action: action
+        });
+      }
+
+      $("#btn_start").click(function () {
+        daiSDK.push('xmas_control_idf', getStatusString("play"), function(e) {
+          switchBtn("playing");
+        });        
+      });
+
+    });
+  </script>
 {% endblock %}
