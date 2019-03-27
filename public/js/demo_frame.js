@@ -83,6 +83,10 @@ var dai = function(){
         }
     }
 
+    function refresh(df_name) {
+        lastData[df_name] = null;
+    }
+
     function push(df_name, data, callback) {
         csmapi.push(device_id, df_name, [data], callback);
     }
@@ -93,7 +97,8 @@ var dai = function(){
     setInterval(routinePull, 500);
 
     return {
-        push : push
+        push : push,
+        refresh : refresh
     };
 }
 

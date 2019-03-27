@@ -64,7 +64,6 @@
       }
 
       $(window).on('iotTalkUpdate', function (e) {
-
         var arr = e.dataArr[0];
         if (e.df_name == undefined) return;
         var df_name = e.df_name;
@@ -95,6 +94,10 @@
           switchBtn("playing");
         });        
       });
+
+      setInterval(function() {
+        daiSDK.refresh("xmas_control_odf");
+      }, 10000);
 
     });
   </script>
