@@ -66,10 +66,10 @@
         var arr = e.dataArr[0];
         if (e.df_name == undefined) return;
         var df_name = e.df_name;
-        if(arr.length > 0) {
+        if(e.dataArr.length > 0 && arr.length > 0) {
           var json = arr[1];
           json = JSON.parse(json);
-          if(json.time + 5000 >= (new Date()).getTime()) {
+          if(json.time + 10000 >= (new Date()).getTime()) {
             if(json.status == "ready") {
               switchBtn("ready");
             } else if(json.status == "playing") {
@@ -77,8 +77,11 @@
             }
           } else {
             switchBtn("connection_error");
-          }          
-        }
+          }      
+        } else {
+          switchBtn("connection_error");
+          console.log("EMT");
+        } 
       });
       
       function getStatusString(action) {

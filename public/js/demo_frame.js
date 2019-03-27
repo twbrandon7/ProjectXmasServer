@@ -3,7 +3,7 @@
  * Modified by Li-Xian Chen (b0543017@ems.niu.edu.tw)
  */
 var dai = function(){
-    var ENDPOINT = 'http://iottalk.niu.edu.tw';
+    var ENDPOINT = 'https://iottalk.niu.edu.tw';
     var device_id = 'static_voiplab_xmas_tree';
 
     dfs = {
