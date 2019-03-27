@@ -3,6 +3,10 @@
 /**
  * Module dependencies.
  */
+require('dotenv').config()
+
+process.env.PREFIX = (process.env.PREFIX)? process.env.PREFIX : "";
+process.env.SITE_URL = (process.env.SITE_URL)? process.env.SITE_URL : "";
 
 var app = require('../app');
 var debug = require('debug')('server:server');
